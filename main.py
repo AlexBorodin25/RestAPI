@@ -2,7 +2,7 @@ import sqlite3
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 DB_FILE = "database.db"
@@ -14,6 +14,7 @@ class CreateTask(BaseModel):
 
 class UpdateTask(BaseModel):
     title: Optional[str] = None
+    description: Optional[str] = None
     completed: Optional[bool] = None
 
 class TaskResponse(BaseModel):
@@ -81,7 +82,7 @@ def get_tasks(
 @app.post("/tasks", response_model=TaskResponse, status_code=201)
 def create_task(task: CreateTask):
     with get_db() as conn:
-        cursor = conn.cursor(
+        cursor = conn.execute(
             """
             INSERT INTO tasks (title, description, completed)
             VALUES (?, ?, ?)
@@ -133,7 +134,7 @@ def update_task(task_id: int, task: UpdateTask):
 
         return task_row(updated_task)
 
-app.delete("/tasks/{task_id}")
+@app.delete("/tasks/{task_id}")
 def delete_task(task_id: int):
     with get_db() as conn:
         cursor = conn.execute(
