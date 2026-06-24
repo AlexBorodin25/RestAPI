@@ -8,12 +8,12 @@ from pydantic import BaseModel, Field
 DB_FILE = "database.db"
 
 class CreateTask(BaseModel):
-    title: str = Field(...)
+    title: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = None
     completed: bool = False
 
 class UpdateTask(BaseModel):
-    title: Optional[str] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
     completed: Optional[bool] = None
 
