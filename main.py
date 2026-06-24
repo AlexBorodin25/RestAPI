@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 DB_FILE = "database.db"
@@ -55,7 +56,43 @@ def task_row(row):
         "description": row['description'],
         "completed": bool(row['completed']),
     }
+@app.get("/", response_class=HTMLResponse)
+def home():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Task API</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 600px;
+                margin: 80px auto;
+                text-align: center;
+            }
 
+            a {
+                display: inline-block;
+                background: #2563eb;
+                color: white;
+                padding: 12px 20px;
+                text-decoration: none;
+                border-radius: 6px;
+                font-size: 16px;
+            }
+
+            a:hover {
+                background: #1d4ed8;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Task CRUD API</h1>
+        <p>Use the interactive docs page to create, view, update, and delete tasks.</p>
+        <a href="/docs">Open API Docs</a>
+    </body>
+    </html>
+    """
 @app.get("/tasks", response_model=list[TaskResponse])
 def get_tasks(
         completed: Optional[bool] = None,
