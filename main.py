@@ -2,7 +2,7 @@ import sqlite3
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import
+from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
 DB_FILE = "database.db"
@@ -40,4 +40,18 @@ def create_table():
         )
         conn.commit()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_table()
+    yield
+
+app = FastAPI(title="CRUD API", lifespan=lifespan)
+
+def task_row(row):
+    return {
+        "id": row['id'],
+        "title": row['title'],
+        "description": row['description'],
+        "completed": bool(row['completed']),
+    }
 
