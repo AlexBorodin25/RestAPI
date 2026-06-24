@@ -133,4 +133,18 @@ def update_task(task_id: int, task: UpdateTask):
 
         return task_row(updated_task)
 
+app.delete("/tasks/{task_id}")
+def delete_task(task_id: int):
+    with get_db() as conn:
+        cursor = conn.execute(
+            """
+            DELETE FROM tasks WHERE id = ?
+            """,
+            (task_id,),
+        )
+        conn.commit()
 
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    return {"message": "Task deleted"}
