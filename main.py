@@ -57,6 +57,17 @@ def task_row(row):
     }
 
 @app.get("/tasks", response_model=list[TaskResponse])
+def home():
+    return {
+        "message": "Task CRUD API is running",
+        "docs": "Go to /docs to use the app",
+        "endpoints": [
+            "GET /tasks",
+            "POST /tasks",
+            "PUT /tasks/{task_id}",
+            "DELETE /tasks/{task_id}",
+        ],
+    }
 def get_tasks(
         completed: Optional[bool] = None,
         limit:int = Query(10, ge=1, le=100),
@@ -79,17 +90,7 @@ def get_tasks(
 
         return [task_row(row) for row in rows]
 
-def home():
-    return {
-        "message": "Task CRUD API is running",
-        "docs": "Go to /docs to use the app",
-        "endpoints": [
-            "GET /tasks",
-            "POST /tasks",
-            "PUT /tasks/{task_id}",
-            "DELETE /tasks/{task_id}",
-        ],
-    }
+
 
 @app.post("/tasks", response_model=TaskResponse, status_code=201)
 def create_task(task: CreateTask):
