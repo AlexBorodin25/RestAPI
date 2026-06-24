@@ -58,7 +58,7 @@ def task_row(row):
 @app.get("/tasks", response_model=list[TaskResponse])
 def get_tasks(
         completed: Optional[bool] = None,
-        limit:int = Query(10, ge=1, le=100)
+        limit:int = Query(10, ge=1, le=100),
         offset: int = Query(0, ge=0),
 ):
     query = """
@@ -77,4 +77,25 @@ def get_tasks(
         rows = conn.execute(query, params).fetchall()
 
         return [task_row(row) for row in rows]
+
+@app.post("/tasks", response_model=TaskResponse, status_code=201)
+def create_task(task: CreateTask):
+    with get_db() as conn:
+        cursor = conn.cursor(
+            """
+            INSERT INTO tasks (title, description, completed)
+            VALUES (?, ?, ?)
+            """,
+            (task.title, task.description, int(task.completed)),
+        )
+        conn.commit()
+
+        row = conn.execute(
+            """
+            SELECT id, title, description, completed FROM tasks WHERE id = ?
+            """,
+            (cursor.lastrowid,),
+        ).fetchone()
+
+    return task_row(row)
 
