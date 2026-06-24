@@ -2,7 +2,7 @@ import sqlite3
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 DB_FILE = "database.db"
@@ -98,4 +98,39 @@ def create_task(task: CreateTask):
         ).fetchone()
 
     return task_row(row)
+
+@app.put("/tasks/{task_id}", response_model=TaskResponse)
+def update_task(task_id: int, task: UpdateTask):
+    with get_db() as conn:
+        existing_task = conn.execute(
+            """
+            SELECT id, title, description, completed FROM tasks WHERE id = ?
+            """,
+            (task_id,),
+        ).fetchone()
+
+        if existing_task is None:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        title = (task.title if task.title is not None else existing_task["title"])
+        description = (task.description if task.description is not None else existing_task["description"])
+        completed = (int(task.completed) if task.completed is not None else existing_task["completed"])
+
+        conn.execute(
+            """
+            UPDATE tasks SET title = ?, description = ?, completed = ? WHERE id = ?
+            """,
+            (title, description, completed, task_id,),
+        )
+        conn.commit()
+
+        updated_task = conn.execute(
+            """
+            SELECT id, title, description, completed FROM tasks WHERE id = ?
+            """,
+            (task_id,),
+        ).fetchone()
+
+        return task_row(updated_task)
+
 
