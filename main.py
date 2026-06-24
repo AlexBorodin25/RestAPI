@@ -55,3 +55,26 @@ def task_row(row):
         "completed": bool(row['completed']),
     }
 
+@app.get("/tasks", response_model=list[TaskResponse])
+def get_tasks(
+        completed: Optional[bool] = None,
+        limit:int = Query(10, ge=1, le=100)
+        offset: int = Query(0, ge=0),
+):
+    query = """
+    SELECT id, title, description, completed FROM tasks
+            """
+    params = []
+
+    if completed is not None:
+        query += " WHERE completed = ?"
+        params.append(1 if completed else 0)
+
+    query += " ORDER BY id LIMIT ? OFFSET ?"
+    params.extend([limit, offset])
+
+    with get_db() as conn:
+        rows = conn.execute(query, params).fetchall()
+
+        return [task_row(row) for row in rows]
+
