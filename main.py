@@ -1,12 +1,24 @@
+import os
 import sqlite3
 from contextlib import asynccontextmanager, contextmanager
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 DB_FILE = "database.db"
+
+API_TOKEN = os.environ.get("API_TOKEN")
+
+if not API_TOKEN:
+    raise RuntimeError("API_TOKEN environment variable is required")
+
+def require_auth(authorization: str = Header(None)):
+    expected_token = f"Bearer {API_TOKEN}"
+
+    if authorization != expected_token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
 class CreateTask(BaseModel):
     title: str = Field(..., min_length=1, max_length=100)
@@ -123,7 +135,7 @@ def get_tasks(
 
 
 @app.post("/tasks", response_model=TaskResponse, status_code=201)
-def create_task(task: CreateTask):
+def create_task(task: CreateTask, auth: None = Depends(require_auth)):
     with get_db() as conn:
         cursor = conn.execute(
             """
@@ -144,7 +156,7 @@ def create_task(task: CreateTask):
     return task_row(row)
 
 @app.put("/tasks/{task_id}", response_model=TaskResponse)
-def update_task(task_id: int, task: UpdateTask):
+def update_task(task_id: int, task: UpdateTask, auth: None = Depends(require_auth)):
     with get_db() as conn:
         existing_task = conn.execute(
             """
@@ -178,7 +190,7 @@ def update_task(task_id: int, task: UpdateTask):
         return task_row(updated_task)
 
 @app.delete("/tasks/{task_id}")
-def delete_task(task_id: int):
+def delete_task(task_id: int, auth: None = Depends(require_auth)):
     with get_db() as conn:
         cursor = conn.execute(
             """
