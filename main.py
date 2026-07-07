@@ -1,5 +1,5 @@
 import sqlite3
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Query
@@ -27,7 +27,11 @@ class TaskResponse(BaseModel):
 def get_db():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
-    return conn
+
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 def create_table():
     with get_db() as conn:
