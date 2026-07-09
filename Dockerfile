@@ -1,8 +1,3 @@
-FROM ubuntu:latest
-LABEL authors="alexb"
-
-ENTRYPOINT ["top", "-b"]
-
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -11,8 +6,11 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py .
+COPY . .
+
+RUN useradd --create-home appuser && chown -R appuser:appuser /app
+USER appuser
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["gunicorn", "main:app", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
