@@ -221,3 +221,8 @@ __marimo__/
 # Database files
 *.db
 database.db
+
+# IDE/editor settings
+.idea/
+.vscode/
+*.iml
